@@ -9,7 +9,7 @@ description = "European aviation intelligence & foresight platform (DL/RL/LLM/ML
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "AeroForesight-EU" }]
+authors = [{ name = "Abhishek Hirve", email = "abhishek.hirve97@gmail.com" }]
 dependencies = [
     "numpy>=1.26",
     "pandas>=2.1",

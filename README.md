@@ -206,6 +206,10 @@ AeroForesight-EU/
 - Swap `data/generate.py` for real OpenSky / Eurocontrol / OAG connectors to go
   from demo to production without touching the model or serving code.
 
+## Author
+
+**Abhishek Hirve** — MS in Artificial Intelligence, Verona, Italy.
+
 ## License
 
-Released under the [MIT License](LICENSE) — © 2026 Abhishek Hirve.
+Released under the [MIT License](LICENSE) — © 2026 Abhishek Hirve, Verona, Italy.
