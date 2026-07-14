@@ -1,0 +1,68 @@
+# AeroForesight-EU — central configuration
+# Everything the pipeline, models and serving layer read lives here.
+
+project:
+  name: AeroForesight-EU
+  market: europe
+  base_currency: EUR
+
+data:
+  # Synthetic generator parameters (stands in for OpenSky / Eurocontrol feeds).
+  seed: 42
+  n_days: 180                 # simulated history window
+  flights_per_day: 4000
+  start_date: "2035-01-01"    # futuristic simulation anchor
+
+# European hub network modelled by the platform.
+airports:
+  - {iata: LHR, city: London,     country: UK, lat: 51.47, lon: -0.45, capacity: 1350}
+  - {iata: CDG, city: Paris,      country: FR, lat: 49.01, lon:  2.55, capacity: 1400}
+  - {iata: FRA, city: Frankfurt,  country: DE, lat: 50.04, lon:  8.56, capacity: 1500}
+  - {iata: AMS, city: Amsterdam,  country: NL, lat: 52.31, lon:  4.76, capacity: 1300}
+  - {iata: MAD, city: Madrid,     country: ES, lat: 40.47, lon: -3.56, capacity: 1150}
+  - {iata: BCN, city: Barcelona,  country: ES, lat: 41.30, lon:  2.08, capacity:  950}
+  - {iata: FCO, city: Rome,       country: IT, lat: 41.80, lon: 12.25, capacity:  900}
+  - {iata: MUC, city: Munich,     country: DE, lat: 48.35, lon: 11.79, capacity: 1000}
+  - {iata: DUB, city: Dublin,     country: IE, lat: 53.42, lon: -6.27, capacity:  700}
+  - {iata: VIE, city: Vienna,     country: AT, lat: 48.11, lon: 16.57, capacity:  740}
+  - {iata: CPH, city: Copenhagen, country: DK, lat: 55.62, lon: 12.65, capacity:  680}
+  - {iata: LIS, city: Lisbon,     country: PT, lat: 38.77, lon: -9.13, capacity:  620}
+
+# Business entities (carriers) with a rough home base + cost profile.
+carriers:
+  - {code: LH, name: Lufthansa Group, hub: FRA, type: network,   cost_index: 1.00}
+  - {code: AF, name: Air France-KLM,  hub: CDG, type: network,   cost_index: 1.02}
+  - {code: BA, name: IAG,             hub: LHR, type: network,   cost_index: 0.98}
+  - {code: FR, name: Ryanair,         hub: DUB, type: lowcost,   cost_index: 0.70}
+  - {code: U2, name: easyJet,         hub: LGW, type: lowcost,   cost_index: 0.74}
+  - {code: KL, name: KLM,             hub: AMS, type: network,   cost_index: 1.01}
+
+# DL delay-prediction model (PyTorch).
+dl_model:
+  hidden_dim: 64
+  epochs: 8
+  batch_size: 256
+  lr: 0.001
+  delay_threshold_min: 15     # a flight is "delayed" if arrival delay > this
+
+# RL network-optimisation agent.
+rl_agent:
+  episodes: 400
+  gamma: 0.95
+  alpha: 0.10
+  epsilon: 0.20
+
+# Futuristic scenario forecasting (to 2040).
+forecast:
+  horizon_years: 5
+  base_year: 2035
+  scenarios:
+    baseline:      {traffic_cagr: 0.028, saf_share_2040: 0.20, ets_price_eur_2040: 140}
+    green_push:    {traffic_cagr: 0.018, saf_share_2040: 0.42, ets_price_eur_2040: 220}
+    high_growth:   {traffic_cagr: 0.041, saf_share_2040: 0.14, ets_price_eur_2040: 110}
+
+# Model-monitoring thresholds (MLOps).
+monitoring:
+  drift_psi_warn: 0.10
+  drift_psi_alert: 0.25
+  min_auc: 0.70

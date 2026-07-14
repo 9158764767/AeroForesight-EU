@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Data & artifacts (generated locally)
+data/*.parquet
+data/*.csv
+!data/.gitkeep
+artifacts/
+mlruns/
+*.pt
+*.joblib
+*.pkl
+
+# Env / secrets
+.env
+.env.local
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.ipynb_checkpoints/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,0 +1,23 @@
+# --- Core scientific stack (required for the runnable demo) ---
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.4
+pyyaml>=6.0
+
+# --- Serving ---
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+
+# --- Dashboard ---
+streamlit>=1.33
+plotly>=5.20
+
+# --- Deep Learning (DL component). CPU wheels are fine for the demo. ---
+torch>=2.2 ; platform_system != "Darwin" or platform_machine != "x86_64"
+
+# --- LLM insight layer (optional; only needed for live briefings) ---
+anthropic>=0.40
+
+# --- Dev / test ---
+pytest>=8.0

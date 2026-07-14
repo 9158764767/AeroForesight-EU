@@ -1,0 +1,26 @@
+services:
+  api:
+    build: .
+    image: aeroforesight-eu:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - AEROFORESIGHT_LLM_MODEL=${AEROFORESIGHT_LLM_MODEL:-claude-opus-4-8}
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./data:/app/data
+
+  dashboard:
+    build: .
+    image: aeroforesight-eu:latest
+    command: streamlit run dashboard/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./data:/app/data
+    depends_on:
+      - api
