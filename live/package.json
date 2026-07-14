@@ -4,6 +4,7 @@
   "private": true,
   "description": "Live OpenSky capture → SSE stream → in-browser foresight dashboard (zero dependencies).",
   "type": "commonjs",
+  "license": "MIT",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
