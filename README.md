@@ -11,6 +11,41 @@ serving → dashboard).
 
 ---
 
+## 🔴 LIVE mode (zero-install, runs on Node)
+
+The `live/` app streams **real aircraft** over Europe and predicts the future in
+your browser — no Python, no build step, **zero dependencies** (Node built-ins only).
+
+```bash
+cd live
+node server.js          # → http://localhost:8787
+```
+
+What it does, end to end:
+
+```
+OpenSky /states/all (live)  ──poll every 10s──►  ingest.js  ──►  data/captures/*.jsonl   (data capture)
+        │  (auto-fallback to physics-lite simulator if offline)        │
+        ▼                                                              ▼
+   predict.js  (delay-risk · live EU-ETS carbon cost · 2040 scenarios)  ──►  SSE /stream  ──►  live dashboard
+```
+
+| Layer | File | What it delivers |
+|---|---|---|
+| **Live capture** | `live/ingest.js` | Polls OpenSky (Europe bbox), normalises state vectors, appends snapshots to `data/captures/`. Falls back to a seeded simulator when the network is down. |
+| **Futuristic prediction** | `live/predict.js` | Per-flight next-hour delay risk, live CO₂ burn + EU-ETS € cost, and a 2035→2040 scenario projection (Baseline / Green Push / High Growth) computed off the **current** sky. |
+| **Streaming server** | `live/server.js` | Aggregates each snapshot and pushes it to browsers over **Server-Sent Events**; REST at `/api/snapshot`, `/api/forecast`, `/api/health`. |
+| **Live dashboard** | `live/public/index.html` | Real-time European airspace map, KPI tiles, rolling delay-risk timeline, top-risk flights, and an interactive 2040 what-if — all vanilla JS/canvas, no CDN. |
+
+Verified live: ~2,600 real aircraft tracked, LHR busiest hub, 2040 EU-ETS bill
+projected at **€16.7bn** (baseline) rising to **€18.1bn** under Green Push.
+
+> The Python stack below (`src/aeroforesight/…`) is the full offline MLOps
+> reference implementation (DL/RL/LLM + training pipeline). Use **LIVE mode** for
+> a runnable, streaming demo; use the Python stack when you have Python 3.10+.
+
+---
+
 ## The real-world problem
 
 European carriers, airports and regulators need to anticipate:

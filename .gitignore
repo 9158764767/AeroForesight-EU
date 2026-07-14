@@ -12,7 +12,11 @@ env/
 # Data & artifacts (generated locally)
 data/*.parquet
 data/*.csv
+data/captures/
 !data/.gitkeep
+
+# Node (live app is zero-dep, but ignore just in case)
+node_modules/
 artifacts/
 mlruns/
 *.pt

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AeroForesight-EU · Live</title>
+<style>
+  :root{
+    --bg:#0a0e17; --panel:#111828; --panel2:#0d1420; --line:#1e2a3d;
+    --ink:#e6edf6; --muted:#8296b0; --accent:#38bdf8; --accent2:#a78bfa;
+    --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:radial-gradient(1200px 600px at 70% -10%,#132033 0,var(--bg) 60%);color:var(--ink);font-family:var(--sans);font-size:14px}
+  header{display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,14,23,.85);backdrop-filter:blur(6px);z-index:5}
+  header h1{font-size:16px;margin:0;letter-spacing:.3px;font-weight:700}
+  header h1 span{color:var(--accent)}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 0 rgba(34,197,94,.6)}
+  .dot.live{background:var(--good);animation:pulse 1.6s infinite}
+  .dot.sim{background:var(--warn)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+  .spacer{flex:1}
+  .sub{color:var(--muted);font-family:var(--mono);font-size:12px}
+  main{padding:16px 20px 40px;max-width:1500px;margin:0 auto}
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .kpi .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+  .kpi .v{font-size:24px;font-weight:700;font-family:var(--mono);margin-top:4px;line-height:1}
+  .kpi .u{color:var(--muted);font-size:11px}
+  .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+  .card h2{margin:0 0 10px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .card h2 .tag{margin-left:auto;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:400}
+  canvas{display:block;width:100%;border-radius:10px}
+  #map{background:linear-gradient(180deg,#0c1626,#0a1120);aspect-ratio:16/10}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:11px;font-family:var(--mono)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .pill{padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:var(--panel2);color:var(--muted);border:0;padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+  .seg button.active{background:var(--accent);color:#04121f;font-weight:700}
+  .fc-heads{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+  .fc-heads .h{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .fc-heads .h .k{color:var(--muted);font-size:11px}
+  .fc-heads .h .v{font-family:var(--mono);font-size:19px;font-weight:700;margin-top:3px}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:18px;font-family:var(--mono)}
+  @media(max-width:1024px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Aero<span>Foresight</span>·EU</h1>
+  <span class="badge"><span id="dot" class="dot"></span><span id="srcLabel">connecting…</span></span>
+  <div class="spacer"></div>
+  <span class="sub" id="clock">—</span>
+</header>
+
+<main>
+  <section class="kpis" id="kpis">
+    <div class="kpi"><div class="k">Airborne · EU</div><div class="v" id="k_air">—</div><div class="u">aircraft tracked</div></div>
+    <div class="kpi"><div class="k">Avg delay risk</div><div class="v" id="k_risk">—</div><div class="u">next-hour, model</div></div>
+    <div class="kpi"><div class="k">High-risk now</div><div class="v" id="k_high">—</div><div class="u">p(delay) ≥ 0.5</div></div>
+    <div class="kpi"><div class="k">CO₂ burn</div><div class="v" id="k_co2">—</div><div class="u">tonnes / minute</div></div>
+    <div class="kpi"><div class="k">EU-ETS cost</div><div class="v" id="k_ets">—</div><div class="u">€ / minute</div></div>
+    <div class="kpi"><div class="k">Busiest hub</div><div class="v" id="k_hub" style="font-size:19px">—</div><div class="u">live congestion</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Live European airspace <span class="tag" id="mapTag">—</span></h2>
+      <canvas id="map" width="920" height="575"></canvas>
+      <div class="legend">
+        <span><i style="background:#22c55e"></i>low delay risk</span>
+        <span><i style="background:#f59e0b"></i>elevated</span>
+        <span><i style="background:#ef4444"></i>high</span>
+        <span><i style="background:#38bdf8;border-radius:2px"></i>hub (size = congestion)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Futuristic prediction · 2035→2040 <span class="tag">what-if off the live sky</span></h2>
+      <div class="seg" id="scenSeg">
+        <button data-s="baseline" class="active">Baseline</button>
+        <button data-s="green_push">Green Push</button>
+        <button data-s="high_growth">High Growth</button>
+      </div>
+      <div class="fc-heads">
+        <div class="h"><div class="k">Traffic 2040</div><div class="v" id="fc_traffic">—</div></div>
+        <div class="h"><div class="k">SAF blend 2040</div><div class="v" id="fc_saf">—</div></div>
+        <div class="h"><div class="k">ETS bill 2040</div><div class="v" id="fc_ets">—</div></div>
+      </div>
+      <canvas id="fc" width="440" height="200"></canvas>
+      <div class="legend">
+        <span><i style="background:#38bdf8"></i>traffic index</span>
+        <span><i style="background:#a78bfa"></i>ETS cost €bn/yr</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="row2">
+    <div class="card">
+      <h2>Network delay-risk timeline <span class="tag">rolling · live</span></h2>
+      <canvas id="ts" width="700" height="200"></canvas>
+    </div>
+    <div class="card">
+      <h2>Highest-risk flights right now</h2>
+      <table><thead><tr><th>Flight</th><th>From</th><th>Hub</th><th>Alt</th><th>Spd</th><th>Risk</th></tr></thead>
+        <tbody id="riskBody"><tr><td colspan="6" class="sub">waiting for feed…</td></tr></tbody></table>
+    </div>
+  </section>
+
+  <footer>AeroForesight-EU · live OpenSky capture → SSE stream → in-browser foresight · data is captured to <code>data/captures/</code></footer>
+</main>
+
+<script>
+const BBOX={lamin:35,lomin:-15,lamax:60,lomax:30};
+let scenario="baseline", lastForecast=null;
+const hist={risk:[],air:[]}, HMAX=60;
+
+const $=id=>document.getElementById(id);
+function riskColor(r){ if(r>=0.5)return"#ef4444"; if(r>=0.28)return"#f59e0b"; return"#22c55e"; }
+function proj(lat,lon,w,h){ return [ (lon-BBOX.lomin)/(BBOX.lomax-BBOX.lomin)*w, (BBOX.lamax-lat)/(BBOX.lamax-BBOX.lamin)*h ]; }
+
+// ---- Map -----------------------------------------------------------------
+function drawMap(d){
+  const c=$("map"), ctx=c.getContext("2d"), w=c.width, h=c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle="#16233a"; ctx.lineWidth=1;
+  for(let x=0;x<=w;x+=w/9){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  for(let y=0;y<=h;y+=h/6){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  // hubs
+  for(const hub of d.hubs){
+    const [x,y]=proj(hub.lat,hub.lon,w,h);
+    const rad=5+hub.load*11;
+    ctx.beginPath();ctx.arc(x,y,rad,0,7);ctx.fillStyle="rgba(56,189,248,.14)";ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,3.2,0,7);ctx.fillStyle="#38bdf8";ctx.fill();
+    ctx.fillStyle="#9fb6d4";ctx.font="10px "+getComputedStyle(document.body).fontFamily;
+    ctx.fillText(hub.iata,x+7,y-6);
+  }
+  // flights as heading triangles
+  for(const f of d.flights){
+    const [x,y]=proj(f.lat,f.lon,w,h);
+    if(x<-5||x>w+5||y<-5||y>h+5)continue;
+    const a=(f.heading-90)*Math.PI/180;
+    ctx.save();ctx.translate(x,y);ctx.rotate(a);
+    ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(-3,2.4);ctx.lineTo(-3,-2.4);ctx.closePath();
+    ctx.fillStyle=riskColor(f.risk);ctx.globalAlpha=.9;ctx.fill();ctx.restore();
+  }
+  ctx.globalAlpha=1;
+}
+
+// ---- Timeline ------------------------------------------------------------
+function drawTS(){
+  const c=$("ts"), ctx=c.getContext("2d"), w=c.width, h=c.height, pad=28;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle="#1e2a3d";ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-6,h-pad);ctx.moveTo(pad,6);ctx.lineTo(pad,h-pad);ctx.stroke();
+  const n=hist.risk.length; if(n<2)return;
+  const xw=(w-pad-6)/(HMAX-1);
+  // risk line (0..1)
+  const line=(arr,max,color)=>{
+    ctx.beginPath();
+    arr.forEach((v,i)=>{const x=pad+i*xw, y=(h-pad)-(v/max)*(h-pad-6); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+  };
+  const amax=Math.max(...hist.air,10)*1.15;
+  line(hist.air,amax,"#38bdf8");
+  line(hist.risk,1,"#f59e0b");
+  ctx.fillStyle="#8296b0";ctx.font="10px monospace";
+  ctx.fillText("delay-risk (amber, 0–1) · airborne (blue)",pad+4,14);
+}
+
+// ---- 2040 forecast -------------------------------------------------------
+function drawForecast(){
+  if(!lastForecast)return;
+  const sc=lastForecast[scenario]; if(!sc)return;
+  const s=sc.series, end=s[s.length-1], start=s[0];
+  $("fc_traffic").textContent="×"+(end.traffic/Math.max(1,start.traffic)).toFixed(2);
+  $("fc_saf").textContent=end.safShare+"%";
+  $("fc_ets").textContent="€"+end.etsCostBnEur.toFixed(1)+"bn";
+  const c=$("fc"),ctx=c.getContext("2d"),w=c.width,h=c.height,pad=26;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle="#1e2a3d";ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-6,h-pad);ctx.moveTo(pad,6);ctx.lineTo(pad,h-pad);ctx.stroke();
+  const xw=(w-pad-6)/(s.length-1);
+  const tmax=Math.max(...s.map(p=>p.traffic))*1.1;
+  const emax=Math.max(...s.map(p=>p.etsCostBnEur))*1.2||1;
+  const plot=(key,max,color,fill)=>{
+    ctx.beginPath();
+    s.forEach((p,i)=>{const x=pad+i*xw,y=(h-pad)-(p[key]/max)*(h-pad-6); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+    if(fill){ctx.lineTo(pad+(s.length-1)*xw,h-pad);ctx.lineTo(pad,h-pad);ctx.closePath();ctx.fillStyle=fill;ctx.fill();}
+  };
+  plot("etsCostBnEur",emax,"#a78bfa","rgba(167,139,250,.12)");
+  plot("traffic",tmax,"#38bdf8");
+  ctx.fillStyle="#8296b0";ctx.font="10px monospace";
+  ctx.fillText(start.year,pad,h-10);ctx.fillText(end.year,w-30,h-10);
+}
+$("scenSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  scenario=b.dataset.s;
+  [...$("scenSeg").children].forEach(x=>x.classList.toggle("active",x===b));
+  drawForecast();
+});
+
+// ---- Apply a snapshot ----------------------------------------------------
+function apply(d){
+  const live=d.source&&d.source.startsWith("opensky");
+  $("dot").className="dot "+(live?"live":"sim");
+  $("srcLabel").textContent=(live?"LIVE · ":"SIM · ")+d.source;
+  $("mapTag").textContent=d.source;
+  $("clock").textContent="updated "+new Date(d.ts).toLocaleTimeString();
+  const k=d.kpis;
+  $("k_air").textContent=k.airborne.toLocaleString();
+  $("k_risk").textContent=k.avgDelayRisk.toFixed(2);
+  $("k_high").textContent=k.highRisk.toLocaleString();
+  $("k_co2").textContent=k.co2PerMinT.toLocaleString();
+  $("k_ets").textContent="€"+k.etsPerMinEur.toLocaleString();
+  $("k_hub").textContent=k.busiestHub;
+  hist.risk.push(k.avgDelayRisk); hist.air.push(k.airborne);
+  if(hist.risk.length>HMAX){hist.risk.shift();hist.air.shift();}
+  lastForecast=d.forecast;
+  drawMap(d); drawTS(); drawForecast();
+  const tb=$("riskBody");
+  tb.innerHTML=d.topRisk.map(r=>{
+    const col=riskColor(r.risk);
+    return `<tr><td><b>${r.callsign}</b></td><td>${r.country}</td><td>${r.hub||"—"}</td>
+      <td>${(r.altitude/1000).toFixed(1)}k</td><td>${Math.round(r.velocity*3.6)}</td>
+      <td><span class="pill" style="background:${col}22;color:${col}">${r.risk.toFixed(2)}</span></td></tr>`;
+  }).join("")||`<tr><td colspan="6" class="sub">no airborne flights</td></tr>`;
+}
+
+// ---- SSE -----------------------------------------------------------------
+function connect(){
+  const es=new EventSource("/stream");
+  es.onmessage=e=>{ try{ apply(JSON.parse(e.data)); }catch(err){ console.error(err);} };
+  es.onerror=()=>{ $("dot").className="dot"; $("srcLabel").textContent="reconnecting…"; };
+}
+connect();
+</script>
+</body>
+</html>
