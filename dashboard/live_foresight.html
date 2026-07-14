@@ -1,0 +1,313 @@
+<title>AeroForesight-EU · Live Ops</title>
+<style>
+  :root{
+    --bg:#0a0e17; --panel:#111828; --panel2:#0d1420; --line:#1e2a3d;
+    --ink:#e6edf6; --muted:#8296b0; --accent:#38bdf8; --accent2:#a78bfa;
+    --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  .af{background:radial-gradient(1200px 600px at 70% -10%,#132033 0,var(--bg) 60%);color:var(--ink);
+      font-family:var(--sans);font-size:14px;min-height:100%;padding-bottom:8px}
+  .af-head{display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--line);
+      position:sticky;top:0;background:rgba(10,14,23,.9);backdrop-filter:blur(6px);z-index:5}
+  .af-head h1{font-size:16px;margin:0;letter-spacing:.3px;font-weight:700}
+  .af-head h1 span{color:var(--accent)}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+      padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--good);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+  .spacer{flex:1}
+  .sub{color:var(--muted);font-family:var(--mono);font-size:12px}
+  .wrap{padding:16px 20px 24px;max-width:1500px;margin:0 auto}
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .kpi .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+  .kpi .v{font-size:24px;font-weight:700;font-family:var(--mono);margin-top:4px;line-height:1;font-variant-numeric:tabular-nums}
+  .kpi .u{color:var(--muted);font-size:11px}
+  .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+  .card h2{margin:0 0 10px;font-size:13px;font-weight:600;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+  .card h2 .tag{margin-left:auto;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:400}
+  canvas{display:block;width:100%;border-radius:10px}
+  #af-map{background:linear-gradient(180deg,#0c1626,#0a1120);aspect-ratio:16/10}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:11px;font-family:var(--mono)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .pill{padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:var(--panel2);color:var(--muted);border:0;padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+  .seg button.active{background:var(--accent);color:#04121f;font-weight:700}
+  .seg button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+  .fc-heads{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+  .fc-heads .h{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .fc-heads .h .k{color:var(--muted);font-size:11px}
+  .fc-heads .h .v{font-family:var(--mono);font-size:19px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+  .af-foot{color:var(--muted);font-size:12px;text-align:center;padding:16px;font-family:var(--mono)}
+  @media(prefers-reduced-motion:reduce){.dot{animation:none}}
+  @media(max-width:1024px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
+</style>
+
+<div class="af">
+  <div class="af-head">
+    <h1>Aero<span>Foresight</span>·EU</h1>
+    <span class="badge"><span class="dot"></span><span id="af-src">simulated live feed · self-contained</span></span>
+    <div class="spacer"></div>
+    <span class="sub" id="af-clock">—</span>
+  </div>
+
+  <div class="wrap">
+    <div class="kpis">
+      <div class="kpi"><div class="k">Airborne · EU</div><div class="v" id="k_air">—</div><div class="u">aircraft tracked</div></div>
+      <div class="kpi"><div class="k">Avg delay risk</div><div class="v" id="k_risk">—</div><div class="u">next-hour, model</div></div>
+      <div class="kpi"><div class="k">High-risk now</div><div class="v" id="k_high">—</div><div class="u">p(delay) ≥ 0.5</div></div>
+      <div class="kpi"><div class="k">CO₂ burn</div><div class="v" id="k_co2">—</div><div class="u">tonnes / minute</div></div>
+      <div class="kpi"><div class="k">EU-ETS cost</div><div class="v" id="k_ets">—</div><div class="u">€ / minute</div></div>
+      <div class="kpi"><div class="k">Busiest hub</div><div class="v" id="k_hub" style="font-size:19px">—</div><div class="u">live congestion</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Live European airspace <span class="tag" id="af-maptag">—</span></h2>
+        <canvas id="af-map" width="920" height="575"></canvas>
+        <div class="legend">
+          <span><i style="background:#22c55e"></i>low delay risk</span>
+          <span><i style="background:#f59e0b"></i>elevated</span>
+          <span><i style="background:#ef4444"></i>high</span>
+          <span><i style="background:#38bdf8;border-radius:2px"></i>hub (size = congestion)</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Futuristic prediction · 2035→2040 <span class="tag">what-if off the live sky</span></h2>
+        <div class="seg" id="af-seg">
+          <button data-s="baseline" class="active">Baseline</button>
+          <button data-s="green_push">Green Push</button>
+          <button data-s="high_growth">High Growth</button>
+        </div>
+        <div class="fc-heads">
+          <div class="h"><div class="k">Traffic 2040</div><div class="v" id="fc_traffic">—</div></div>
+          <div class="h"><div class="k">SAF blend 2040</div><div class="v" id="fc_saf">—</div></div>
+          <div class="h"><div class="k">ETS bill 2040</div><div class="v" id="fc_ets">—</div></div>
+        </div>
+        <canvas id="af-fc" width="440" height="200"></canvas>
+        <div class="legend">
+          <span><i style="background:#38bdf8"></i>traffic index</span>
+          <span><i style="background:#a78bfa"></i>ETS cost €bn/yr</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <h2>Network delay-risk timeline <span class="tag">rolling · live</span></h2>
+        <canvas id="af-ts" width="700" height="200"></canvas>
+      </div>
+      <div class="card">
+        <h2>Highest-risk flights right now</h2>
+        <table><thead><tr><th>Flight</th><th>From</th><th>Hub</th><th>Alt</th><th>Spd</th><th>Risk</th></tr></thead>
+          <tbody id="af-risk"><tr><td colspan="6" class="sub">starting simulation…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="af-foot">Self-contained demo · an in-browser simulator + prediction engine mirror the live OpenSky version (run <code>node live/server.js</code> for real data)</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // ---- Reference data (mirrors config.yaml) ------------------------------
+  const AIRPORTS=[
+    {iata:'LHR',city:'London',country:'UK',lat:51.47,lon:-0.45,capacity:1350},
+    {iata:'CDG',city:'Paris',country:'FR',lat:49.01,lon:2.55,capacity:1400},
+    {iata:'FRA',city:'Frankfurt',country:'DE',lat:50.04,lon:8.56,capacity:1500},
+    {iata:'AMS',city:'Amsterdam',country:'NL',lat:52.31,lon:4.76,capacity:1300},
+    {iata:'MAD',city:'Madrid',country:'ES',lat:40.47,lon:-3.56,capacity:1150},
+    {iata:'BCN',city:'Barcelona',country:'ES',lat:41.30,lon:2.08,capacity:950},
+    {iata:'FCO',city:'Rome',country:'IT',lat:41.80,lon:12.25,capacity:900},
+    {iata:'MUC',city:'Munich',country:'DE',lat:48.35,lon:11.79,capacity:1000},
+    {iata:'DUB',city:'Dublin',country:'IE',lat:53.42,lon:-6.27,capacity:700},
+    {iata:'VIE',city:'Vienna',country:'AT',lat:48.11,lon:16.57,capacity:740},
+    {iata:'CPH',city:'Copenhagen',country:'DK',lat:55.62,lon:12.65,capacity:680},
+    {iata:'LIS',city:'Lisbon',country:'PT',lat:38.77,lon:-9.13,capacity:620}
+  ];
+  const BBOX={lamin:35,lomin:-15,lamax:60,lomax:30};
+  const EU_ANNUAL_BASE=10800000;   // EU flights/yr anchor for 2040 forecast
+  const ETS_NOW=95;                // €/tonne CO2
+
+  const rad=d=>d*Math.PI/180;
+  function haversineKm(a,b,c,d){const dLat=rad(c-a),dLon=rad(d-b);
+    const x=Math.sin(dLat/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dLon/2)**2;
+    return 2*6371*Math.asin(Math.sqrt(x));}
+  function nearestHub(lat,lon){let best=null,bd=1e9;
+    for(const a of AIRPORTS){const dd=haversineKm(lat,lon,a.lat,a.lon);if(dd<bd){bd=dd;best=a;}}
+    return bd<=120?best:null;}
+  const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
+  const sig=z=>1/(1+Math.exp(-z));
+
+  // ---- Prediction layer (mirrors predict.js) -----------------------------
+  function delayRisk(f,load){
+    const alt=f.altitude,spd=f.velocity,vr=f.verticalRate;
+    const descending=vr<-1.5?1:0,lowAlt=alt<4000?1:0,slow=spd<170?1:0;
+    const holding=(lowAlt&&Math.abs(vr)<1.5&&spd<200)?1:0;
+    const z=-2.4+1.3*load+0.9*descending*load+0.8*slow+1.6*holding+0.5*lowAlt;
+    return clamp(sig(z),0.01,0.98);
+  }
+  function carbonNow(f){
+    const fuel=clamp(30+f.velocity*0.11+(f.altitude/1000)*2.2,25,120);
+    const co2=fuel*3.16; return {co2, ets:(co2/1000)*ETS_NOW};
+  }
+  const SCEN={
+    baseline:{label:'Baseline',cagr:0.028,saf:0.20,ets:140},
+    green_push:{label:'Green Push',cagr:0.018,saf:0.42,ets:220},
+    high_growth:{label:'High Growth',cagr:0.041,saf:0.14,ets:110}
+  };
+  function forecast2040(annual,base=2035,target=2040,co2pf=12){
+    const yrs=target-base,out={};
+    for(const[k,s]of Object.entries(SCEN)){const series=[];
+      for(let y=0;y<=yrs;y++){
+        const traffic=annual*Math.pow(1+s.cagr,y);
+        const saf=(s.saf/yrs)*y, fossil=1-saf;
+        const co2Mt=(traffic*co2pf*fossil)/1e6;
+        const price=95+((s.ets-95)/yrs)*y;
+        const etsBn=(co2Mt*1e6*price)/1e9;
+        series.push({year:base+y,traffic:Math.round(traffic),safShare:+(saf*100).toFixed(1),
+          co2Mt:+co2Mt.toFixed(2),etsPrice:Math.round(price),etsCostBnEur:+etsBn.toFixed(2)});
+      }
+      out[k]={label:s.label,series};
+    }
+    return out;
+  }
+
+  // ---- In-browser simulator (mirrors ingest.js fallback) -----------------
+  function mulberry32(seed){return function(){seed|=0;seed=(seed+0x6d2b79f5)|0;
+    let t=Math.imul(seed^(seed>>>15),1|seed);t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return((t^(t>>>14))>>>0)/4294967296;};}
+  const rng=mulberry32(42);
+  const CARR=['LH','AF','BA','FR','U2','KL','SK','IB','AZ','TP'];
+  const fleet=[];
+  for(let i=0;i<1300;i++){
+    const a=AIRPORTS[(rng()*AIRPORTS.length)|0], b=AIRPORTS[(rng()*AIRPORTS.length)|0];
+    fleet.push({id:'S'+i.toString(36),callsign:CARR[(rng()*CARR.length)|0]+(100+((rng()*8900)|0)),
+      country:a.country,lat:a.lat,lon:a.lon,tgtLat:b.lat,tgtLon:b.lon,
+      alt:9200+rng()*3200,vel:210+rng()*55,prog:rng(),sp:0.006+rng()*0.012});
+  }
+  function tick(){
+    return fleet.map(f=>{
+      f.prog+=f.sp;
+      if(f.prog>=1){f.prog=0;f.lat=f.tgtLat;f.lon=f.tgtLon;
+        const b=AIRPORTS[(rng()*AIRPORTS.length)|0];f.tgtLat=b.lat;f.tgtLon=b.lon;}
+      const lat=f.lat+(f.tgtLat-f.lat)*f.prog, lon=f.lon+(f.tgtLon-f.lon)*f.prog;
+      const climbing=f.prog<0.15, descending=f.prog>0.85;
+      return {id:f.id,callsign:f.callsign,country:f.country,lat,lon,
+        altitude:descending?f.alt*(1-(f.prog-0.85)/0.15):climbing?f.alt*(f.prog/0.15):f.alt,
+        velocity:descending?150+rng()*40:f.vel,
+        heading:Math.atan2(f.tgtLon-lon,f.tgtLat-lat)*180/Math.PI,
+        verticalRate:descending?-6-rng()*4:climbing?6+rng()*4:(rng()-0.5),
+        onGround:false};
+    });
+  }
+
+  // ---- Aggregate (mirrors server.js) -------------------------------------
+  function aggregate(flights){
+    const hubCount={}; AIRPORTS.forEach(a=>hubCount[a.iata]=0);
+    for(const f of flights){const h=nearestHub(f.lat,f.lon); f._hub=h?h.iata:null; if(h)hubCount[h.iata]++;}
+    const hubs=AIRPORTS.map(a=>({iata:a.iata,city:a.city,lat:a.lat,lon:a.lon,count:hubCount[a.iata],
+      load:Math.min(1.2,hubCount[a.iata]/Math.max(1,a.capacity*0.03))}));
+    const hubLoad={}; hubs.forEach(h=>hubLoad[h.iata]=h.load);
+    let riskSum=0,high=0,co2=0,ets=0; const scored=[];
+    for(const f of flights){const load=f._hub?hubLoad[f._hub]:0;const r=delayRisk(f,load);const c=carbonNow(f);
+      riskSum+=r; if(r>=0.5)high++; co2+=c.co2; ets+=c.ets;
+      f._risk=r; scored.push(f);}
+    const busiest=hubs.reduce((a,b)=>b.count>a.count?b:a,hubs[0]);
+    const top=scored.slice().sort((a,b)=>b._risk-a._risk).slice(0,10);
+    return {ts:Date.now(),airborne:flights.length,
+      avgRisk:flights.length?riskSum/flights.length:0,high,
+      co2t:co2/1000,ets:Math.round(ets),busiest:busiest.iata+' ('+busiest.count+')',
+      hubs,flights,top,forecast:forecast2040(EU_ANNUAL_BASE)};
+  }
+
+  // ---- Rendering ---------------------------------------------------------
+  const $=id=>document.getElementById(id);
+  const rc=r=>r>=0.5?'#ef4444':r>=0.28?'#f59e0b':'#22c55e';
+  const proj=(lat,lon,w,h)=>[(lon-BBOX.lomin)/(BBOX.lomax-BBOX.lomin)*w,(BBOX.lamax-lat)/(BBOX.lamax-BBOX.lamin)*h];
+  const hist={risk:[],air:[]}, HMAX=60; let scenario='baseline', lastFc=null;
+
+  function drawMap(d){
+    const c=$('af-map'),x=c.getContext('2d'),w=c.width,h=c.height;
+    x.clearRect(0,0,w,h);
+    x.strokeStyle='#16233a';x.lineWidth=1;
+    for(let i=0;i<=w;i+=w/9){x.beginPath();x.moveTo(i,0);x.lineTo(i,h);x.stroke();}
+    for(let j=0;j<=h;j+=h/6){x.beginPath();x.moveTo(0,j);x.lineTo(w,j);x.stroke();}
+    for(const hub of d.hubs){const[px,py]=proj(hub.lat,hub.lon,w,h);
+      x.beginPath();x.arc(px,py,5+hub.load*11,0,7);x.fillStyle='rgba(56,189,248,.14)';x.fill();
+      x.beginPath();x.arc(px,py,3.2,0,7);x.fillStyle='#38bdf8';x.fill();
+      x.fillStyle='#9fb6d4';x.font='10px system-ui';x.fillText(hub.iata,px+7,py-6);}
+    for(const f of d.flights){const[px,py]=proj(f.lat,f.lon,w,h);
+      if(px<-5||px>w+5||py<-5||py>h+5)continue;
+      x.save();x.translate(px,py);x.rotate((f.heading-90)*Math.PI/180);
+      x.beginPath();x.moveTo(4,0);x.lineTo(-3,2.4);x.lineTo(-3,-2.4);x.closePath();
+      x.fillStyle=rc(f._risk);x.globalAlpha=.9;x.fill();x.restore();}
+    x.globalAlpha=1;
+  }
+  function drawTS(){
+    const c=$('af-ts'),x=c.getContext('2d'),w=c.width,h=c.height,p=28;
+    x.clearRect(0,0,w,h);
+    x.strokeStyle='#1e2a3d';x.beginPath();x.moveTo(p,h-p);x.lineTo(w-6,h-p);x.moveTo(p,6);x.lineTo(p,h-p);x.stroke();
+    if(hist.risk.length<2)return;const xw=(w-p-6)/(HMAX-1);
+    const line=(arr,max,col)=>{x.beginPath();arr.forEach((v,i)=>{const px=p+i*xw,py=(h-p)-(v/max)*(h-p-6);i?x.lineTo(px,py):x.moveTo(px,py);});x.strokeStyle=col;x.lineWidth=2;x.stroke();};
+    line(hist.air,Math.max(...hist.air,10)*1.15,'#38bdf8');
+    line(hist.risk,1,'#f59e0b');
+    x.fillStyle='#8296b0';x.font='10px monospace';x.fillText('delay-risk (amber, 0–1) · airborne (blue)',p+4,14);
+  }
+  function drawFc(){
+    if(!lastFc)return;const sc=lastFc[scenario];if(!sc)return;
+    const s=sc.series,end=s[s.length-1],st=s[0];
+    $('fc_traffic').textContent='×'+(end.traffic/Math.max(1,st.traffic)).toFixed(2);
+    $('fc_saf').textContent=end.safShare+'%';
+    $('fc_ets').textContent='€'+end.etsCostBnEur.toFixed(1)+'bn';
+    const c=$('af-fc'),x=c.getContext('2d'),w=c.width,h=c.height,p=26;
+    x.clearRect(0,0,w,h);
+    x.strokeStyle='#1e2a3d';x.beginPath();x.moveTo(p,h-p);x.lineTo(w-6,h-p);x.moveTo(p,6);x.lineTo(p,h-p);x.stroke();
+    const xw=(w-p-6)/(s.length-1);
+    const tmax=Math.max(...s.map(q=>q.traffic))*1.1, emax=Math.max(...s.map(q=>q.etsCostBnEur))*1.2||1;
+    const plot=(key,max,col,fill)=>{x.beginPath();s.forEach((q,i)=>{const px=p+i*xw,py=(h-p)-(q[key]/max)*(h-p-6);i?x.lineTo(px,py):x.moveTo(px,py);});
+      x.strokeStyle=col;x.lineWidth=2;x.stroke();
+      if(fill){x.lineTo(p+(s.length-1)*xw,h-p);x.lineTo(p,h-p);x.closePath();x.fillStyle=fill;x.fill();}};
+    plot('etsCostBnEur',emax,'#a78bfa','rgba(167,139,250,.12)');
+    plot('traffic',tmax,'#38bdf8');
+    x.fillStyle='#8296b0';x.font='10px monospace';x.fillText(st.year,p,h-10);x.fillText(end.year,w-30,h-10);
+  }
+  function apply(d){
+    $('af-clock').textContent='updated '+new Date(d.ts).toLocaleTimeString();
+    $('af-maptag').textContent=d.airborne.toLocaleString()+' aircraft';
+    $('k_air').textContent=d.airborne.toLocaleString();
+    $('k_risk').textContent=d.avgRisk.toFixed(2);
+    $('k_high').textContent=d.high.toLocaleString();
+    $('k_co2').textContent=d.co2t.toFixed(1);
+    $('k_ets').textContent='€'+d.ets.toLocaleString();
+    $('k_hub').textContent=d.busiest;
+    hist.risk.push(d.avgRisk);hist.air.push(d.airborne);
+    if(hist.risk.length>HMAX){hist.risk.shift();hist.air.shift();}
+    lastFc=d.forecast;
+    drawMap(d);drawTS();drawFc();
+    $('af-risk').innerHTML=d.top.map(r=>{const col=rc(r._risk);
+      return '<tr><td><b>'+r.callsign+'</b></td><td>'+r.country+'</td><td>'+(r._hub||'—')+'</td>'+
+        '<td>'+(r.altitude/1000).toFixed(1)+'k</td><td>'+Math.round(r.velocity*3.6)+'</td>'+
+        '<td><span class="pill" style="background:'+col+'22;color:'+col+'">'+r._risk.toFixed(2)+'</span></td></tr>';
+    }).join('');
+  }
+
+  $('af-seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    scenario=b.dataset.s;[...$('af-seg').children].forEach(z=>z.classList.toggle('active',z===b));drawFc();});
+
+  function loop(){apply(aggregate(tick()));}
+  loop();
+  setInterval(loop,2000);
+})();
+</script>
