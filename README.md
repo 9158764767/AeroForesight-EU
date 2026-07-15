@@ -6,7 +6,7 @@
 
 Live‑stream every aircraft over Europe, predict which flights will run late,
 price the carbon in the sky right now, and project the **2040** cost of European
-aviation under EU‑ETS + ReFuelEU SAF mandates — all in the browser.
+aviation under EU‑ETS + ReFuelEU SAF mandates all in the browser.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-38bdf8.svg)](LICENSE)
 ![Node](https://img.shields.io/badge/Node-%E2%89%A518-22c55e.svg)
@@ -27,7 +27,7 @@ aviation under EU‑ETS + ReFuelEU SAF mandates — all in the browser.
 ## What it does
 
 AeroForesight‑EU captures **live flight state** over Europe, runs a prediction
-layer over it, and streams the result to a real‑time dashboard — combining
+layer over it, and streams the result to a real‑time dashboard  combining
 **Deep Learning**, **Reinforcement Learning**, an **LLM foresight layer**, and a
 full **MLOps** pipeline.
 
