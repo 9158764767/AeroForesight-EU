@@ -93,7 +93,7 @@ function broadcast(agg) {
 }
 
 // ---- HTTP server --------------------------------------------------------
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 
 function serveStatic(req, res) {
   const rel = req.url === '/' ? '/index.html' : req.url.split('?')[0];
